@@ -21,12 +21,20 @@ package org.sonar.server.platform.db.migration.version.v64;
 
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Stream;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.sonar.core.util.stream.Collectors;
 import org.sonar.db.CoreDbTester;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class MakeCeQueueExecutionCountNotNullableTest {
+
+  private static final String TABLE_CE_QUEUE = "ce_queue";
 
   @Rule
   public CoreDbTester db = CoreDbTester.createForSchema(MakeCeQueueExecutionCountNotNullableTest.class, "ce_queue.sql");
@@ -39,6 +47,42 @@ public class MakeCeQueueExecutionCountNotNullableTest {
   public void execute_makes_column_execution_count_not_nullable_when_table_is_empty() throws SQLException {
     underTest.execute();
 
-    db.assertColumnDefinition("ce_queue", "execution_count", Types.INTEGER, null, false);
+    verifyColumnDefinition();
+  }
+
+  @Test
+  public void execute_set_column_execution_count_to_0_and_not_nullable_no_matter_status_of_the_task() throws SQLException {
+    insertCeQueue("u1", Status.IN_PROGRESS);
+    insertCeQueue("u2", Status.PENDING);
+
+    underTest.execute();
+
+    verifyColumnDefinition();
+    assertThat(getUuidsForExecutionCount(0)).containsOnly("u1", "u2");
+    assertThat(getUuidsForExecutionCount(1)).isEmpty();
+  }
+
+  private List<Object> getUuidsForExecutionCount(int executionCount) {
+    return db.select("select uuid as \"UUID\" from ce_queue where execution_count=" + executionCount)
+        .stream()
+        .flatMap(row -> Stream.of(row.get("UUID")))
+        .collect(Collectors.toList());
+  }
+
+  private void verifyColumnDefinition() {
+    db.assertColumnDefinition(TABLE_CE_QUEUE, "execution_count", Types.INTEGER, null, false);
+  }
+
+  private void insertCeQueue(String uuid, Status status) {
+    db.executeInsert(TABLE_CE_QUEUE,
+        "UUID", uuid,
+        "TASK_TYPE", uuid + "_type",
+        "STATUS", status.name(),
+        "CREATED_AT", new Random().nextLong() + "",
+        "UPDATED_AT", new Random().nextLong() + "");
+  }
+
+  public enum Status {
+    PENDING, IN_PROGRESS
   }
 }
