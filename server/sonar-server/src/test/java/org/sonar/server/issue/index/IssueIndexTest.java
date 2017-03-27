@@ -97,7 +97,7 @@ public class IssueIndexTest {
 
   private IssueIndexer issueIndexer = new IssueIndexer(tester.client(), new IssueIteratorFactory(null));
   private ViewIndexer viewIndexer = new ViewIndexer(null, tester.client());
-  private RuleIndexer ruleIndexer = new RuleIndexer(system2, null, tester.client(), TestDefaultOrganizationProvider.fromUuid("org-1"));
+  private RuleIndexer ruleIndexer = new RuleIndexer(null, tester.client(), TestDefaultOrganizationProvider.fromUuid("org-1"));
   private PermissionIndexerTester authorizationIndexerTester = new PermissionIndexerTester(tester, issueIndexer);
 
   private IssueIndex underTest = new IssueIndex(tester.client(), system2, userSessionRule, new AuthorizationTypeSupport(userSessionRule));
@@ -1328,9 +1328,6 @@ public class IssueIndexTest {
 
   @Test
   public void list_tags() {
-    indexRules(
-      RuleDocTesting.newDoc(XOO_X1).setAllTags(asList("tag1", "systag1")),
-      RuleDocTesting.newDoc(XOO_X2).setAllTags(asList("tag2", "systag2")));
     ComponentDto project = newProjectDto(newOrganizationDto());
     ComponentDto file = newFileDto(project, null);
     indexIssues(
@@ -1363,9 +1360,5 @@ public class IssueIndexTest {
 
   private void indexView(String viewUuid, List<String> projects) {
     viewIndexer.index(new ViewDoc().setUuid(viewUuid).setProjects(projects));
-  }
-
-  private void indexRules(RuleDoc... rules) {
-    ruleIndexer.index(asList(rules).iterator());
   }
 }

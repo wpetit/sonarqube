@@ -82,7 +82,7 @@ public class InheritanceActionTest {
     dbClient = dbTester.getDbClient();
     dbSession = dbTester.getSession();
     esClient = esTester.client();
-    ruleIndexer = new RuleIndexer(System2.INSTANCE, dbClient, esClient, TestDefaultOrganizationProvider.fromUuid("org-1"));
+    ruleIndexer = new RuleIndexer(dbClient, esClient, TestDefaultOrganizationProvider.fromUuid("org-1"));
     activeRuleIndexer = new ActiveRuleIndexer(System2.INSTANCE, dbClient, esClient);
     TestDefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(dbTester);
     underTest = new InheritanceAction(
@@ -116,7 +116,7 @@ public class InheritanceActionTest {
     createActiveRule(rule2, groupWide);
 
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     QualityProfileDto companyWide = createProfile("xoo", "My Company Profile", "xoo-my-company-profile-12345");

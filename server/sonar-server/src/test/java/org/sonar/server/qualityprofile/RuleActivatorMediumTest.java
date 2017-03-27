@@ -134,7 +134,7 @@ public class RuleActivatorMediumTest {
     db.qualityProfileDao().insert(dbSession, profileDto);
     dbSession.commit();
     dbSession.clearCache();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
   }
 
   @After
@@ -899,7 +899,7 @@ public class RuleActivatorMediumTest {
       db.ruleDao().insert(dbSession, newDto(RuleKey.of("bulk", "r_" + i)).setLanguage("xoo").getDefinition());
     }
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     // 0. No active rules so far (base case) and plenty rules available
     verifyZeroActiveRules(XOO_P1_KEY);

@@ -294,7 +294,7 @@ public class ShowActionMediumTest {
     session.commit();
     session.clearCache();
 
-    tester.get(RuleIndexer.class).index();
+    tester.get(RuleIndexer.class).indexOnStartup();
     tester.get(ActiveRuleIndexer.class).index();
 
     WsTester.TestRequest request = wsTester.newGetRequest("api/rules", "show")

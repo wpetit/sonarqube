@@ -100,7 +100,7 @@ public class QProfileBackuperMediumTest {
       .setName("max").setDefaultValue("10").setType(RuleParamType.INTEGER.type()));
     dbSession.commit();
     dbSession.clearCache();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     this.organization = OrganizationTesting.newOrganizationDto();
     db.organizationDao().insert(dbSession, organization);
   }
@@ -117,7 +117,7 @@ public class QProfileBackuperMediumTest {
     db.ruleDao().insert(dbSession, blahRule.getDefinition());
     dbSession.commit();
     dbSession.clearCache();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     // create profile P1 with rules x2 and x1 activated
     QualityProfileDto profile = newXooP1(organization);

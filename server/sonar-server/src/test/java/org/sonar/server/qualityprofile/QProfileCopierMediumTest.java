@@ -90,7 +90,7 @@ public class QProfileCopierMediumTest {
     db.qualityProfileDao().insert(dbSession, sourceProfile);
     dbSession.commit();
     dbSession.clearCache();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
   }
 
   @After

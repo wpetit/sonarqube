@@ -119,7 +119,7 @@ public class RulesWsMediumTest {
 
     session.commit();
     session.clearCache();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     // 1. With Activation
@@ -154,7 +154,7 @@ public class RulesWsMediumTest {
     ruleDao.update(session, rule2.getMetadata().setRuleId(rule2.getId()));
 
     session.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     tester.wsTester().newGetRequest(API_ENDPOINT, API_TAGS_METHOD).execute().assertJson(this.getClass(), "get_tags.json");
     tester.wsTester().newGetRequest(API_ENDPOINT, API_TAGS_METHOD)

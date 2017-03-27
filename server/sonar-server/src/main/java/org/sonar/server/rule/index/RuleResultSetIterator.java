@@ -21,12 +21,15 @@ package org.sonar.server.rule.index;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
 import org.sonar.api.rule.RuleKey;
@@ -70,7 +73,7 @@ public class RuleResultSetIterator extends ResultSetIterator<RuleDoc> {
     "LEFT OUTER JOIN rules t ON t.id=r.template_id " +
     "LEFT OUTER JOIN rules_metadata rm ON rm.rule_id = r.id and rm.organization_uuid=?";
 
-  private static final String SQL_AFTER_DATE = SQL_ALL + " WHERE r.updated_at>?";
+  private static final String SQL_RULE_KEY = " WHERE r.plugin_name=? AND r.plugin_rule_key=?";
 
   private static final Splitter TAGS_SPLITTER = Splitter.on(',').trimResults().omitEmptyStrings();
 
@@ -78,15 +81,31 @@ public class RuleResultSetIterator extends ResultSetIterator<RuleDoc> {
     super(stmt);
   }
 
-  static RuleResultSetIterator create(DbClient dbClient, DbSession session, String organizationUuid, long afterDate) {
+  static Stream<RuleDoc> create(DbClient dbClient, DbSession session, String organizationUuid) {
+    return doCreate(dbClient, session, organizationUuid, null);
+  }
+
+  static Stream<RuleDoc> create(DbClient dbClient, DbSession session, String organizationUuid, RuleKey ruleKey) {
+    return doCreate(dbClient, session, organizationUuid, ruleKey);
+  }
+
+  private static Stream<RuleDoc> doCreate(DbClient dbClient, DbSession session, String organizationUuid, @Nullable RuleKey ruleKey) {
     try {
-      String sql = afterDate > 0L ? SQL_AFTER_DATE : SQL_ALL;
-      PreparedStatement stmt = dbClient.getMyBatis().newScrollingSelectStatement(session, sql);
-      stmt.setString(1, organizationUuid);
-      if (afterDate > 0L) {
-        stmt.setLong(2, afterDate);
+      StringBuilder sql = new StringBuilder(SQL_ALL);
+      if (ruleKey != null) {
+        sql.append(SQL_RULE_KEY);
       }
-      return new RuleResultSetIterator(stmt);
+      PreparedStatement stmt = dbClient.getMyBatis().newScrollingSelectStatement(session, sql.toString());
+      stmt.setString(1, organizationUuid);
+      if (ruleKey != null) {
+        stmt.setString(2, ruleKey.repository());
+        stmt.setString(3, ruleKey.rule());
+      }
+
+      RuleResultSetIterator iterator = new RuleResultSetIterator(stmt);
+      return StreamSupport.stream(
+        Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED),
+        false);
     } catch (SQLException e) {
       throw new IllegalStateException("Fail to prepare SQL request to select all rules", e);
     }
@@ -94,7 +113,7 @@ public class RuleResultSetIterator extends ResultSetIterator<RuleDoc> {
 
   @Override
   protected RuleDoc read(ResultSet rs) throws SQLException {
-    RuleDoc doc = new RuleDoc(Maps.newHashMapWithExpectedSize(16));
+    RuleDoc doc = new RuleDoc();
 
     String ruleKey = rs.getString(1);
     String repositoryKey = rs.getString(2);
@@ -108,12 +127,14 @@ public class RuleResultSetIterator extends ResultSetIterator<RuleDoc> {
 
     String description = rs.getString(4);
     String descriptionFormat = rs.getString(5);
-    if (descriptionFormat != null) {
-      if (RuleDto.Format.HTML.equals(RuleDto.Format.valueOf(descriptionFormat))) {
-        doc.setHtmlDescription(description);
+    if (descriptionFormat != null && description != null) {
+      String htmlDescription;
+      if (RuleDto.Format.HTML == RuleDto.Format.valueOf(descriptionFormat)) {
+        htmlDescription = description;
       } else {
-        doc.setHtmlDescription(description == null ? null : Markdown.convertToHtml(description));
+        htmlDescription = Markdown.convertToHtml(description);
       }
+      doc.setHtmlDescription(htmlDescription);
     }
 
     doc.setSeverity(SeverityUtil.getSeverityFromOrdinal(rs.getInt(6)));

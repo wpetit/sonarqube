@@ -99,7 +99,7 @@ public class RuleUpdater {
     update(dbSession, rule);
     updateParameters(dbSession, update, rule);
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.index(rule.getKey());
     return true;
   }
 

@@ -95,7 +95,7 @@ public class RuleDeleterMediumTest {
     db.qualityProfileDao().insert(dbSession, profileDto);
     dbSession.commit();
     dbSession.clearCache();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     // Activate the custom rule

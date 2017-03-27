@@ -106,7 +106,7 @@ public class RegisterRules implements Startable {
       session.commit();
 
       persistRepositories(session, context.repositories());
-      ruleIndexer.index();
+      ruleIndexer.indexOnStartup();
       activeRuleIndexer.index(changes);
       profiler.stopDebug();
     } finally {
@@ -150,6 +150,7 @@ public class RegisterRules implements Startable {
 
     if (executeUpdate) {
       update(session, rule);
+      // TODO index only those rules
     }
 
     mergeParams(ruleDef, rule, session);

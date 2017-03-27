@@ -19,64 +19,50 @@
  */
 package org.sonar.server.rule.index;
 
-import java.util.Iterator;
+import java.util.stream.Stream;
 import org.elasticsearch.action.index.IndexRequest;
-import org.sonar.api.utils.System2;
+import org.sonar.api.rule.RuleKey;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
-import org.sonar.server.es.BaseIndexer;
 import org.sonar.server.es.BulkIndexer;
 import org.sonar.server.es.BulkIndexer.Size;
 import org.sonar.server.es.EsClient;
 import org.sonar.server.organization.DefaultOrganizationProvider;
 
-import static org.sonar.server.rule.index.RuleIndexDefinition.FIELD_RULE_UPDATED_AT;
 import static org.sonar.server.rule.index.RuleIndexDefinition.INDEX_TYPE_RULE;
 
-public class RuleIndexer extends BaseIndexer {
+public class RuleIndexer {
 
   private final DbClient dbClient;
+  private final EsClient esClient;
   private final DefaultOrganizationProvider defaultOrganizationProvider;
 
-  public RuleIndexer(System2 system2, DbClient dbClient, EsClient esClient,
-    DefaultOrganizationProvider defaultOrganizationProvider) {
-    super(system2, esClient, 300, INDEX_TYPE_RULE, FIELD_RULE_UPDATED_AT);
+  public RuleIndexer(DbClient dbClient, EsClient esClient,
+                     DefaultOrganizationProvider defaultOrganizationProvider) {
     this.dbClient = dbClient;
+    this.esClient = esClient;
     this.defaultOrganizationProvider = defaultOrganizationProvider;
   }
 
-  @Override
-  protected long doIndex(long lastUpdatedAt) {
-    return doIndex(createBulkIndexer(Size.REGULAR), lastUpdatedAt);
-  }
-
-  public void index(Iterator<RuleDoc> rules) {
-    doIndex(createBulkIndexer(Size.REGULAR), rules);
-  }
-
-  private long doIndex(BulkIndexer bulk, long lastUpdatedAt) {
-    long maxDate;
+  public void index(RuleKey customRuleKey) {
     try (DbSession dbSession = dbClient.openSession(false)) {
-      String defaultOrganizationUuid = defaultOrganizationProvider.get().getUuid();
-      RuleResultSetIterator rowIt = RuleResultSetIterator.create(dbClient, dbSession, defaultOrganizationUuid, lastUpdatedAt);
-      maxDate = doIndex(bulk, rowIt);
-      rowIt.close();
-      return maxDate;
+      doIndex(createBulkIndexer(Size.REGULAR),
+        RuleResultSetIterator.create(dbClient, dbSession, defaultOrganizationProvider.get().getUuid(), customRuleKey));
     }
   }
 
-  private static long doIndex(BulkIndexer bulk, Iterator<RuleDoc> rules) {
-    bulk.start();
-    long maxDate = 0L;
-    while (rules.hasNext()) {
-      RuleDoc rule = rules.next();
-      bulk.add(newIndexRequest(rule));
-
-      // it's more efficient to sort programmatically than in SQL on some databases (MySQL for instance)
-      maxDate = Math.max(maxDate, rule.updatedAt());
+  public void indexOnStartup() {
+    try (DbSession dbSession = dbClient.openSession(false)) {
+      doIndex(createBulkIndexer(Size.LARGE),
+        RuleResultSetIterator.create(dbClient, dbSession, defaultOrganizationProvider.get().getUuid()));
     }
+  }
+
+  private static void doIndex(BulkIndexer bulk, Stream<RuleDoc> rules) {
+    bulk.start();
+    rules.map(RuleIndexer::newIndexRequest)
+      .forEachOrdered(bulk::add);
     bulk.stop();
-    return maxDate;
   }
 
   private BulkIndexer createBulkIndexer(Size size) {
@@ -87,5 +73,9 @@ public class RuleIndexer extends BaseIndexer {
 
   private static IndexRequest newIndexRequest(RuleDoc rule) {
     return new IndexRequest(INDEX_TYPE_RULE.getIndex(), INDEX_TYPE_RULE.getType(), rule.key().toString()).source(rule.getFields());
+  }
+
+  public void delete(RuleKey ruleKey) {
+    esClient.prepareDelete(RuleIndexDefinition.INDEX_TYPE_RULE, ruleKey.toString()).get();
   }
 }

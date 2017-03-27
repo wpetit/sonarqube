@@ -19,8 +19,7 @@
  */
 package org.sonar.server.rule.index;
 
-import com.google.common.collect.Maps;
-import java.util.Map;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,11 +28,13 @@ import org.sonar.api.rule.RuleStatus;
 import org.sonar.api.rule.Severity;
 import org.sonar.api.rules.RuleType;
 import org.sonar.api.utils.System2;
+import org.sonar.core.util.stream.Collectors;
 import org.sonar.db.DbClient;
 import org.sonar.db.DbSession;
 import org.sonar.db.DbTester;
 import org.sonar.db.rule.RuleDefinitionDto;
 import org.sonar.db.rule.RuleDto;
+import org.sonar.server.exceptions.NotFoundException;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -89,27 +90,25 @@ public class RuleResultSetIteratorTest {
     dbTester.rules().insertRule(templateRule);
 
     String organizationUuid = dbTester.getDefaultOrganization().getUuid();
-    RuleResultSetIterator it = RuleResultSetIterator.create(dbTester.getDbClient(), dbTester.getSession(), organizationUuid, 0L);
-    Map<String, RuleDoc> rulesByKey = rulesByKey(it);
-    it.close();
+    List<RuleDoc> results = getResults(organizationUuid);
 
-    assertThat(rulesByKey).hasSize(1);
+    assertThat(results).hasSize(1);
 
-    RuleDoc rule = rulesByKey.get(templateRule.getRuleKey());
-    assertThat(rule).isNotNull();
-    assertThat(rule.key()).isEqualTo(RuleKey.of("xoo", "S001"));
-    assertThat(rule.ruleKey()).isEqualTo("S001");
-    assertThat(rule.repository()).isEqualTo("xoo");
-    assertThat(rule.internalKey()).isEqualTo("S1");
-    assertThat(rule.name()).isEqualTo("Null Pointer");
-    assertThat(rule.htmlDescription()).isEqualTo("S001 desc");
-    assertThat(rule.language()).isEqualTo("xoo");
-    assertThat(rule.severity()).isEqualTo(Severity.BLOCKER);
-    assertThat(rule.status()).isEqualTo(RuleStatus.READY);
-    assertThat(rule.isTemplate()).isTrue();
-    assertThat(rule.allTags()).containsOnly("performance", "cwe");
-    assertThat(rule.createdAt()).isEqualTo(1500000000000L);
-    assertThat(rule.updatedAt()).isEqualTo(1600000000000L);
+    RuleDoc templateDoc = getRuleDoc(results, templateRule.getRuleKey());
+    assertThat(templateDoc).isNotNull();
+    assertThat(templateDoc.key()).isEqualTo(RuleKey.of("xoo", "S001"));
+    assertThat(templateDoc.ruleKey()).isEqualTo("S001");
+    assertThat(templateDoc.repository()).isEqualTo("xoo");
+    assertThat(templateDoc.internalKey()).isEqualTo("S1");
+    assertThat(templateDoc.name()).isEqualTo("Null Pointer");
+    assertThat(templateDoc.htmlDescription()).isEqualTo("S001 desc");
+    assertThat(templateDoc.language()).isEqualTo("xoo");
+    assertThat(templateDoc.severity()).isEqualTo(Severity.BLOCKER);
+    assertThat(templateDoc.status()).isEqualTo(RuleStatus.READY);
+    assertThat(templateDoc.isTemplate()).isTrue();
+    assertThat(templateDoc.allTags()).containsOnly("performance", "cwe");
+    assertThat(templateDoc.createdAt()).isEqualTo(1500000000000L);
+    assertThat(templateDoc.updatedAt()).isEqualTo(1600000000000L);
   }
 
   @Test
@@ -119,41 +118,39 @@ public class RuleResultSetIteratorTest {
     dbSession.commit();
 
     String organizationUuid = dbTester.getDefaultOrganization().getUuid();
-    RuleResultSetIterator it = RuleResultSetIterator.create(dbTester.getDbClient(), dbTester.getSession(), organizationUuid, 0L);
-    Map<String, RuleDoc> rulesByKey = rulesByKey(it);
-    it.close();
+    List<RuleDoc> results = getResults(organizationUuid);
 
-    assertThat(rulesByKey).hasSize(2);
+    assertThat(results).hasSize(2);
 
-    RuleDoc rule = rulesByKey.get(templateRule.getRuleKey());
-    assertThat(rule.key()).isEqualTo(RuleKey.of("xoo", "S001"));
-    assertThat(rule.ruleKey()).isEqualTo("S001");
-    assertThat(rule.repository()).isEqualTo("xoo");
-    assertThat(rule.internalKey()).isEqualTo("S1");
-    assertThat(rule.name()).isEqualTo("Null Pointer");
-    assertThat(rule.htmlDescription()).isEqualTo("S001 desc");
-    assertThat(rule.language()).isEqualTo("xoo");
-    assertThat(rule.severity()).isEqualTo(Severity.BLOCKER);
-    assertThat(rule.status()).isEqualTo(RuleStatus.READY);
-    assertThat(rule.isTemplate()).isTrue();
-    assertThat(rule.allTags()).containsOnly("performance", "cwe");
-    assertThat(rule.createdAt()).isEqualTo(1500000000000L);
-    assertThat(rule.updatedAt()).isEqualTo(1600000000000L);
+    RuleDoc templateDoc = getRuleDoc(results, templateRule.getRuleKey());
+    assertThat(templateDoc.key()).isEqualTo(RuleKey.of("xoo", "S001"));
+    assertThat(templateDoc.ruleKey()).isEqualTo("S001");
+    assertThat(templateDoc.repository()).isEqualTo("xoo");
+    assertThat(templateDoc.internalKey()).isEqualTo("S1");
+    assertThat(templateDoc.name()).isEqualTo("Null Pointer");
+    assertThat(templateDoc.htmlDescription()).isEqualTo("S001 desc");
+    assertThat(templateDoc.language()).isEqualTo("xoo");
+    assertThat(templateDoc.severity()).isEqualTo(Severity.BLOCKER);
+    assertThat(templateDoc.status()).isEqualTo(RuleStatus.READY);
+    assertThat(templateDoc.isTemplate()).isTrue();
+    assertThat(templateDoc.allTags()).containsOnly("performance", "cwe");
+    assertThat(templateDoc.createdAt()).isEqualTo(1500000000000L);
+    assertThat(templateDoc.updatedAt()).isEqualTo(1600000000000L);
 
-    rule = rulesByKey.get(customRule.getRuleKey());
-    assertThat(rule.key()).isEqualTo(RuleKey.of("xoo", "S002"));
-    assertThat(rule.ruleKey()).isEqualTo("S002");
-    assertThat(rule.repository()).isEqualTo("xoo");
-    assertThat(rule.internalKey()).isEqualTo("S2");
-    assertThat(rule.name()).isEqualTo("Slow");
-    assertThat(rule.htmlDescription()).isEqualTo("<strong>S002 desc</strong>");
-    assertThat(rule.language()).isEqualTo("xoo");
-    assertThat(rule.severity()).isEqualTo(Severity.MAJOR);
-    assertThat(rule.status()).isEqualTo(RuleStatus.BETA);
-    assertThat(rule.isTemplate()).isFalse();
-    assertThat(rule.allTags()).isEmpty();
-    assertThat(rule.createdAt()).isEqualTo(2000000000000L);
-    assertThat(rule.updatedAt()).isEqualTo(2100000000000L);
+    RuleDoc customDoc = getRuleDoc(results, customRule.getRuleKey());
+    assertThat(customDoc.key()).isEqualTo(RuleKey.of("xoo", "S002"));
+    assertThat(customDoc.ruleKey()).isEqualTo("S002");
+    assertThat(customDoc.repository()).isEqualTo("xoo");
+    assertThat(customDoc.internalKey()).isEqualTo("S2");
+    assertThat(customDoc.name()).isEqualTo("Slow");
+    assertThat(customDoc.htmlDescription()).isEqualTo("<strong>S002 desc</strong>");
+    assertThat(customDoc.language()).isEqualTo("xoo");
+    assertThat(customDoc.severity()).isEqualTo(Severity.MAJOR);
+    assertThat(customDoc.status()).isEqualTo(RuleStatus.BETA);
+    assertThat(customDoc.isTemplate()).isFalse();
+    assertThat(customDoc.allTags()).isEmpty();
+    assertThat(customDoc.createdAt()).isEqualTo(2000000000000L);
+    assertThat(customDoc.updatedAt()).isEqualTo(2100000000000L);
   }
 
   @Test
@@ -163,19 +160,17 @@ public class RuleResultSetIteratorTest {
     dbSession.commit();
 
     String organizationUuid = dbTester.getDefaultOrganization().getUuid();
-    RuleResultSetIterator it = RuleResultSetIterator.create(dbTester.getDbClient(), dbTester.getSession(), organizationUuid, 0L);
-    Map<String, RuleDoc> rulesByKey = rulesByKey(it);
-    it.close();
+    List<RuleDoc> results = getResults(organizationUuid);
 
-    assertThat(rulesByKey).hasSize(2);
+    assertThat(results).hasSize(2);
 
-    RuleDoc rule = rulesByKey.get(templateRule.getRuleKey());
-    assertThat(rule.isTemplate()).isTrue();
-    assertThat(rule.templateKey()).isNull();
+    RuleDoc templateDoc = getRuleDoc(results, templateRule.getRuleKey());
+    assertThat(templateDoc.isTemplate()).isTrue();
+    assertThat(templateDoc.templateKey()).isNull();
 
-    rule = rulesByKey.get(customRule.getRuleKey());
-    assertThat(rule.isTemplate()).isFalse();
-    assertThat(rule.templateKey()).isEqualTo(RuleKey.of("xoo", "S001"));
+    RuleDoc customDoc = getRuleDoc(results, customRule.getRuleKey());
+    assertThat(customDoc.isTemplate()).isFalse();
+    assertThat(customDoc.templateKey()).isEqualTo(RuleKey.of("xoo", "S001"));
   }
 
   @Test
@@ -184,14 +179,21 @@ public class RuleResultSetIteratorTest {
     dbSession.commit();
 
     String organizationUuid = dbTester.getDefaultOrganization().getUuid();
-    RuleResultSetIterator it = RuleResultSetIterator.create(dbTester.getDbClient(), dbTester.getSession(), organizationUuid, 0L);
-    Map<String, RuleDoc> rulesByKey = rulesByKey(it);
-    it.close();
+    List<RuleDoc> results = getResults(organizationUuid);
 
-    assertThat(rulesByKey).hasSize(1);
+    assertThat(results).hasSize(1);
   }
 
-  private static Map<String, RuleDoc> rulesByKey(RuleResultSetIterator it) {
-    return Maps.uniqueIndex(it, rule -> rule.key().rule());
+  private List<RuleDoc> getResults(String organizationUuid) {
+    return RuleResultSetIterator.create(dbTester.getDbClient(), dbTester.getSession(), organizationUuid).collect(Collectors.toList());
+  }
+
+  private RuleDoc getRuleDoc(List<RuleDoc> results, String ruleKey) {
+    RuleDoc rule;
+    rule = results.stream()
+      .filter(r -> ruleKey.equals(r.key().rule()))
+      .findAny()
+      .orElseThrow(() -> new NotFoundException("Rule not found in results"));
+    return rule;
   }
 }

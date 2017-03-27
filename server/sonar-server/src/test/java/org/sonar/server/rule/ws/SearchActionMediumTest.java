@@ -114,7 +114,7 @@ public class SearchActionMediumTest {
     ruleDao.insert(dbSession, RuleTesting.newXooX1().getDefinition());
     ruleDao.insert(dbSession, RuleTesting.newXooX2().getDefinition());
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
     request.setParam(PARAM_RULE_KEY, RuleTesting.XOO_X1.toString());
@@ -140,7 +140,7 @@ public class SearchActionMediumTest {
     ruleDao.insert(dbSession, rule2.getDefinition());
     ruleDao.update(dbSession, rule2.getMetadata().setRuleId(rule2.getId()));
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
     WsTester.Result result = request.execute();
@@ -159,7 +159,7 @@ public class SearchActionMediumTest {
       .setDescriptionFormat(RuleDto.Format.MARKDOWN)
       .getDefinition());
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD).setParam(WebService.Param.FIELDS, "name,htmlDesc,mdDesc");
     WsTester.Result result = request.execute();
@@ -174,7 +174,7 @@ public class SearchActionMediumTest {
       .setType(RuleType.CODE_SMELL)
       .getDefinition());
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD).setParam(WebService.Param.FIELDS, "name");
     WsTester.Result result = request.execute();
@@ -186,7 +186,7 @@ public class SearchActionMediumTest {
   public void return_lang_field() throws Exception {
     ruleDao.insert(dbSession, RuleTesting.newXooX1().getDefinition());
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD).setParam(WebService.Param.FIELDS, "lang");
     WsTester.Result result = request.execute();
@@ -201,7 +201,7 @@ public class SearchActionMediumTest {
   public void return_lang_name_field() throws Exception {
     ruleDao.insert(dbSession, RuleTesting.newXooX1().getDefinition());
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD).setParam(WebService.Param.FIELDS, "langName");
     WsTester.Result result = request.execute();
@@ -216,7 +216,7 @@ public class SearchActionMediumTest {
   public void return_lang_key_field_when_language_name_is_not_available() throws Exception {
     ruleDao.insert(dbSession, RuleTesting.newDto(RuleKey.of("other", "rule")).setLanguage("unknown").getDefinition());
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD).setParam(WebService.Param.FIELDS, "langName");
     WsTester.Result result = request.execute();
@@ -237,7 +237,7 @@ public class SearchActionMediumTest {
     ruleDao.insert(dbSession, ruleDto.getDefinition());
     ruleDao.update(dbSession, ruleDto.getMetadata().setRuleId(ruleDto.getId()));
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
     request.setParam(WebService.Param.FIELDS, "debtRemFn,debtOverloaded,defaultDebtRemFn");
@@ -257,7 +257,7 @@ public class SearchActionMediumTest {
     ruleDao.insert(dbSession, ruleDto.getDefinition());
     ruleDao.update(dbSession, ruleDto.getMetadata().setRuleId(ruleDto.getId()));
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
     request.setParam(WebService.Param.FIELDS, "debtRemFn,debtOverloaded,defaultDebtRemFn");
@@ -277,7 +277,7 @@ public class SearchActionMediumTest {
     ruleDao.insert(dbSession, ruleDto.getDefinition());
     ruleDao.update(dbSession, ruleDto.getMetadata().setRuleId(ruleDto.getId()));
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
     request.setParam(WebService.Param.FIELDS, "debtRemFn,debtOverloaded,defaultDebtRemFn");
@@ -293,7 +293,7 @@ public class SearchActionMediumTest {
     rule.setTemplateId(templateRule.getId());
     ruleDao.insert(dbSession, rule.getDefinition());
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
     request.setParam(WebService.Param.FIELDS, "isTemplate");
@@ -308,7 +308,7 @@ public class SearchActionMediumTest {
     ruleDao.insert(dbSession, templateRule.getDefinition());
     ruleDao.insert(dbSession, RuleTesting.newXooX2().setTemplateId(templateRule.getId()).getDefinition());
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
     request.setParam(WebService.Param.FIELDS, "templateKey");
@@ -329,7 +329,7 @@ public class SearchActionMediumTest {
     tester.get(ActiveRuleDao.class).insert(dbSession, activeRule);
 
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
@@ -394,7 +394,7 @@ public class SearchActionMediumTest {
     tester.get(ActiveRuleDao.class).insertParam(dbSession, activeRule2, activeRuleParam3);
 
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
@@ -432,7 +432,7 @@ public class SearchActionMediumTest {
     tester.get(ActiveRuleDao.class).insert(dbSession, activeRule2);
 
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
@@ -478,7 +478,7 @@ public class SearchActionMediumTest {
     tester.get(ActiveRuleDao.class).insertParam(dbSession, activeRule, activeRuleParam2);
 
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
@@ -499,7 +499,7 @@ public class SearchActionMediumTest {
     ruleDao.update(dbSession, rule.getMetadata().setRuleId(rule.getId()));
 
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
@@ -518,7 +518,7 @@ public class SearchActionMediumTest {
       .getDefinition());
 
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
@@ -550,7 +550,7 @@ public class SearchActionMediumTest {
     ruleDao.insert(dbSession, RuleTesting.newXooX3().setStatus(RuleStatus.DEPRECATED).getDefinition());
 
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
     request.setParam(PARAM_STATUSES, "DEPRECATED");
@@ -571,7 +571,7 @@ public class SearchActionMediumTest {
       .getDefinition());
 
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     // 1. Sort Name Asc
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
@@ -606,7 +606,7 @@ public class SearchActionMediumTest {
 
     dbSession.commit();
     dbSession.clearCache();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     // 1. find today's rules
     WsTester.TestRequest request = tester.wsTester().newGetRequest(API_ENDPOINT, API_SEARCH_METHOD);
@@ -636,7 +636,7 @@ public class SearchActionMediumTest {
     ruleDao.insert(dbSession, ruleDto.getDefinition());
     ruleDao.update(dbSession, ruleDto.getMetadata().setRuleId(ruleDto.getId()));
     dbSession.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
 
     WsTester.TestRequest request = tester.wsTester()
       .newGetRequest(API_ENDPOINT, API_SEARCH_METHOD)

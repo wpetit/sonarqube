@@ -101,7 +101,6 @@ public class ChangeParentActionTest {
     ruleIndex = new RuleIndex(esClient);
     TestDefaultOrganizationProvider defaultOrganizationProvider = TestDefaultOrganizationProvider.from(dbTester);
     ruleIndexer = new RuleIndexer(
-      System2.INSTANCE,
       dbClient,
       esClient,
       defaultOrganizationProvider);
@@ -158,7 +157,7 @@ public class ChangeParentActionTest {
 
     RuleDto rule1 = createRule();
     createActiveRule(rule1, parent1);
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     assertThat(dbClient.activeRuleDao().selectByProfileKey(dbSession, child.getKey())).isEmpty();
@@ -188,7 +187,7 @@ public class ChangeParentActionTest {
     RuleDto rule2 = createRule();
     createActiveRule(rule1, parent1);
     createActiveRule(rule2, parent2);
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     // Set parent 1
@@ -216,7 +215,7 @@ public class ChangeParentActionTest {
 
     RuleDto rule1 = createRule();
     createActiveRule(rule1, parent);
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     // Set parent
@@ -245,7 +244,7 @@ public class ChangeParentActionTest {
     RuleDto rule2 = createRule();
     createActiveRule(rule1, parent1);
     createActiveRule(rule2, parent2);
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     assertThat(dbClient.activeRuleDao().selectByProfileKey(dbSession, child.getKey())).isEmpty();
@@ -304,7 +303,7 @@ public class ChangeParentActionTest {
 
     RuleDto rule1 = createRule();
     createActiveRule(rule1, parent);
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     activeRuleIndexer.index();
 
     assertThat(dbClient.activeRuleDao().selectByProfileKey(dbSession, child.getKey())).isEmpty();

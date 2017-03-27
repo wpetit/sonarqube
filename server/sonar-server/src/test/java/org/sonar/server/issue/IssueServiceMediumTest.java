@@ -181,7 +181,7 @@ public class IssueServiceMediumTest {
       ruleDao.update(session, rule.getMetadata().setRuleId(rule.getId()));
     }
     session.commit();
-    ruleIndexer.index();
+    ruleIndexer.indexOnStartup();
     return rule;
   }
 

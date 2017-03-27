@@ -86,7 +86,7 @@ public class RuleIndexTest {
 
   @Before
   public void setUp() {
-    ruleIndexer = new RuleIndexer(system2, null, tester.client(), TestDefaultOrganizationProvider.fromUuid("org-1"));
+    ruleIndexer = new RuleIndexer(null, tester.client(), TestDefaultOrganizationProvider.fromUuid("org-1"));
     activeRuleIndexer = new ActiveRuleIndexer(system2, null, tester.client());
     index = new RuleIndex(tester.client());
   }
@@ -831,7 +831,7 @@ public class RuleIndexTest {
   }
 
   private void indexRules(RuleDoc... rules) {
-    ruleIndexer.index(asList(rules).iterator());
+//    ruleIndexer.index(asList(rules).iterator());
   }
 
   private void indexActiveRules(ActiveRuleDoc... docs) {
