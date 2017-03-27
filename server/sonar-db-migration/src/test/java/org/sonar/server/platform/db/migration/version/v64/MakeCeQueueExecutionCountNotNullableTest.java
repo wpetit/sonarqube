@@ -17,25 +17,28 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package org.sonar.server.platform.db.migration.version.v64;
 
+import java.sql.SQLException;
+import java.sql.Types;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.sonar.db.CoreDbTester;
 
-import static org.sonar.server.platform.db.migration.version.DbVersionTestUtils.verifyMigrationCount;
-import static org.sonar.server.platform.db.migration.version.DbVersionTestUtils.verifyMinimumMigrationNumber;
+public class MakeCeQueueExecutionCountNotNullableTest {
 
-public class DbVersion64Test {
-  private DbVersion64 underTest = new DbVersion64();
+  @Rule
+  public CoreDbTester db = CoreDbTester.createForSchema(MakeCeQueueExecutionCountNotNullableTest.class, "ce_queue.sql");
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
+
+  private MakeCeQueueExecutionCountNotNullable underTest = new MakeCeQueueExecutionCountNotNullable(db.database());
 
   @Test
-  public void migrationNumber_starts_at_1600() {
-    verifyMinimumMigrationNumber(underTest, 1600);
-  }
+  public void execute_makes_column_execution_count_not_nullable_when_table_is_empty() throws SQLException {
+    underTest.execute();
 
-  @Test
-  public void verify_migration_count() {
-    verifyMigrationCount(underTest, 20);
+    db.assertColumnDefinition("ce_queue", "execution_count", Types.INTEGER, null, false);
   }
-
 }
