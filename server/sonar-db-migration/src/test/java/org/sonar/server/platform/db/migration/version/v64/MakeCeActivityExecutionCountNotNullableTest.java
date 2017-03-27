@@ -51,7 +51,7 @@ public class MakeCeActivityExecutionCountNotNullableTest {
   }
 
   @Test
-  public void execute_set_column_execution_count_to_0_and_not_nullable_depending_on_status_of_the_task() throws SQLException {
+  public void execute_set_column_execution_count_to_0_or_1_and_not_nullable_depending_on_status_of_the_task() throws SQLException {
     insertCeActivity("u1", Status.SUCCESS);
     insertCeActivity("u2", Status.FAILED);
     insertCeActivity("u3", Status.CANCELED);
